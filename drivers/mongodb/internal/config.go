@@ -9,8 +9,14 @@ import (
 	"github.com/datazip-inc/olake/utils"
 )
 
+// add HostConfig for consistent config
+type HostConfig struct {
+	Host string `json:"host"`
+	Port int    `json:"port"`
+}
+
 type Config struct {
-	Hosts             []string       `json:"hosts"`
+	Hosts             []HostConfig   `json:"hosts"`
 	Username          string         `json:"username"`
 	Password          string         `json:"password"`
 	AuthDB            string         `json:"authdb"`
@@ -46,9 +52,15 @@ func (c *Config) URI() string {
 		options = fmt.Sprintf("%s&replicaSet=%s&readPreference=%s", options, c.ReplicaSet, c.ReadPreference)
 	}
 
+	// build the host strings with ports
+	var hosts []string
+	for _, host := range c.Hosts {
+		hosts = append(hosts, fmt.Sprintf("%s:%d", host.Host, host.Port))
+	}
+
 	return fmt.Sprintf(
 		"%s://%s:%s@%s/?%s", connectionPrefix,
-		c.Username, c.Password, strings.Join(c.Hosts, ","), options,
+		c.Username, c.Password, strings.Join(hosts, ","), options,
 	)
 }
 
